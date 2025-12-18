@@ -68,3 +68,8 @@ def run_experiment(sequence_name, num_runs=20):
         )
 
     return results
+
+
+if __name__ == "__main__":
+    # Default experiment settings
+    run_experiment(sequence_name="S1_20", num_runs=20)

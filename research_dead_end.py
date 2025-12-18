@@ -214,3 +214,8 @@ def run_experiment(sequence_name, max_evals=50000, num_runs=20):
     print(f"\nBest strategy: {best.upper()}")
 
     return results
+
+
+if __name__ == "__main__":
+    # Default experiment settings
+    run_experiment(sequence_name="S1_20", max_evals=50000, num_runs=20)

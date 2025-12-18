@@ -1,6 +1,9 @@
 #!/bin/bash
 # Test script for 3D HP Protein Folding project
 # CPSC 5740 Final Project - Sumanth Ratna (sr2437)
+#
+# This script demonstrates the project, explains the research question,
+# and shows results from full experiments.
 
 set -e
 
@@ -47,10 +50,16 @@ echo "   - Tournament selection with elitism"
 echo "   - Local search (hill climbing) refinement"
 echo ""
 echo "2. Monte Carlo Tree Search (MCTS)"
-echo "   - UCT selection with exploration constant C=0.5"
+echo "   - UCT selection with exploration constant tuning"
 echo "   - Greedy rollout policy (prioritizes H-H contacts)"
 echo "   - Smart expansion ordering (promising moves first)"
 echo "   - Periodic local search refinement"
+echo ""
+echo "3. Deep Q-Network (DQN) [Stretch Goal]"
+echo "   - 3D CNN architecture for spatial state encoding"
+echo "   - Double DQN for reduced overestimation"
+echo "   - Domain-guided exploration (H-H contact bias)"
+echo "   - Experience replay and target network"
 echo ""
 
 # ============================================
@@ -58,8 +67,8 @@ echo ""
 # ============================================
 echo "RESEARCH QUESTIONS"
 echo "------------------"
-echo "Primary: How do GA and MCTS compare in solution quality and computational"
-echo "         efficiency for 3D HP protein folding?"
+echo "Primary: How do GA, MCTS, and DQN compare in solution quality and"
+echo "         computational efficiency for 3D HP protein folding?"
 echo ""
 echo "Additional questions explored:"
 echo "  Q2: How do different dead-end handling strategies affect MCTS?"
@@ -68,7 +77,7 @@ echo "  Q4: How does performance scale with compute budget (10k-100k evals)?"
 echo ""
 
 # ============================================
-# QUICK DEMO (runs in ~1 minute)
+# QUICK DEMO (runs in ~1-2 minutes)
 # ============================================
 echo "=========================================="
 echo "QUICK DEMO"
@@ -76,6 +85,7 @@ echo "=========================================="
 echo ""
 echo "Running quick comparison on sequence S1_20 (20 monomers)..."
 echo "Budget: 5000 evaluations, 3 runs per algorithm"
+echo "(This demonstrates the code works; full results are shown below)"
 echo ""
 
 python3 main.py --sequence S1_20 --algorithms ga,mcts --max-evaluations 5000 --num-runs 3
@@ -103,6 +113,7 @@ echo "  - MCTS achieves 82-86% of optimal vs GA's 79-83%"
 echo "  - Both algorithms struggle to reach global optimum on 27-mers"
 echo "  - GA benefits from larger population sizes (200-400)"
 echo "  - Dead-end handling strategy has minimal impact (greedy avoids dead-ends)"
+echo "  - DQN shows promise but requires more training for competitive results"
 echo ""
 
 # ============================================
@@ -116,8 +127,13 @@ echo "# Full comparison on verified sequences (takes ~10 minutes each):"
 echo "python3 main.py -s UM1_27 -a ga,mcts -e 100000 -n 10 --plot"
 echo "python3 main.py -s UM2_27 -a ga,mcts -e 100000 -n 10 --plot"
 echo ""
-echo "# Run all research experiments:"
-echo "python3 research_experiments.py"
+echo "# Include DQN in comparison (requires GPU for reasonable speed):"
+echo "python3 main.py -s S1_20 -a ga,mcts,dqn -e 50000 -n 5"
+echo ""
+echo "# Run individual research experiments:"
+echo "python3 research_dead_end.py    # MCTS dead-end handling strategies"
+echo "python3 research_pop_size.py    # GA population size trade-off"
+echo "python3 research_budget.py      # Budget scaling comparison"
 echo ""
 echo "# List available sequences and algorithms:"
 echo "python3 main.py --list-sequences"

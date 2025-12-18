@@ -62,3 +62,8 @@ def run_experiment(sequence_name, total_budget=100000, num_runs=20):
     print(f"\nBest population size: {best}")
 
     return results
+
+
+if __name__ == "__main__":
+    # Default experiment settings
+    run_experiment(sequence_name="S1_20", total_budget=100000, num_runs=20)
