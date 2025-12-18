@@ -10,12 +10,13 @@ from runner import (
     run_comparison,
     run_multi_algorithm_comparison,
 )
-from visualize import plot_comparison_bar_chart, plot_conformation_3d
+from visualize import plot_conformation_3d
 
 
 AVAILABLE_ALGORITHMS = {
     "ga": "Genetic Algorithm",
     "mcts": "Monte Carlo Tree Search",
+    "dqn": "Deep Q-Network",
 }
 
 
@@ -100,8 +101,19 @@ Examples:
     parser.add_argument(
         "--seed",
         type=int,
-        default=42,
-        help="Base random seed for reproducibility (default: 42)",
+        default=0,
+        help="Base random seed for reproducibility (default: 0)",
+    )
+    parser.add_argument(
+        "--pretrain",
+        action="store_true",
+        help="Pre-train DQN on diverse sequences before fine-tuning (improves DQN performance)",
+    )
+    parser.add_argument(
+        "--pretrain-evals",
+        type=int,
+        default=100000,
+        help="Number of evaluations for DQN pre-training phase (default: 100000)",
     )
 
     args = parser.parse_args()
@@ -146,7 +158,16 @@ Examples:
     print(f"Algorithms: {', '.join(algorithms)}")
     print(f"Max evaluations: {args.max_evaluations}")
     print(f"Number of runs: {args.num_runs}")
-    print(f"Random seed: {args.seed}\n")
+    print(f"Random seed: {args.seed}")
+    if "dqn" in algorithms and args.pretrain:
+        print(f"DQN pre-training: {args.pretrain_evals} evaluations")
+    print()
+
+    # Build extra kwargs for DQN pre-training
+    dqn_kwargs = {}
+    if args.pretrain:
+        dqn_kwargs["pretrain"] = True
+        dqn_kwargs["pretrain_evaluations"] = args.pretrain_evals
 
     if len(algorithms) == 1:
         # Single algorithm run
@@ -159,6 +180,7 @@ Examples:
             max_evaluations=args.max_evaluations,
             num_runs=args.num_runs,
             base_seed=args.seed,
+            **(dqn_kwargs if algo == "dqn" else {}),
         )
 
         from runner import print_results_summary
@@ -183,44 +205,21 @@ Examples:
             except Exception as e:
                 print(f"Warning: Could not generate plot: {e}")
 
-    elif len(algorithms) == 2:
-        # Two-algorithm comparison (use existing compare_algorithms for backward compatibility)
+    else:
+        # Multi-algorithm comparison (2+)
         comparison = run_multi_algorithm_comparison(
             sequence_name=args.sequence,
             algorithms=algorithms,
             max_evaluations=args.max_evaluations,
             num_runs=args.num_runs,
             base_seed=args.seed,
+            dqn_kwargs=dqn_kwargs if "dqn" in algorithms else None,
         )
 
         print_multi_comparison_summary(comparison)
 
         if args.plot:
-            # Plot comparison chart
-            try:
-                # Create comparison dict in old format for plotting
-                if len(algorithms) == 2:
-                    old_format = {
-                        "sequence_name": args.sequence,
-                        "ga": comparison["results"].get(
-                            "ga", comparison["results"].get(algorithms[0])
-                        ),
-                        "mcts": comparison["results"].get(
-                            "mcts", comparison["results"].get(algorithms[1])
-                        ),
-                    }
-                    plot_comparison_bar_chart(
-                        old_format,
-                        show=False,
-                        save_path=f"results/comparison_{args.sequence}.png",
-                    )
-                    print(
-                        f"Saved comparison plot to results/comparison_{args.sequence}.png"
-                    )
-            except Exception as e:
-                print(f"Warning: Could not generate comparison plot: {e}")
-
-            # Plot best conformations
+            # Plot best conformations for each algorithm
             for algo in algorithms:
                 try:
                     results = comparison["results"].get(algo, {})
@@ -239,18 +238,6 @@ Examples:
                         )
                 except Exception as e:
                     print(f"Warning: Could not generate {algo} plot: {e}")
-
-    else:
-        # Multi-algorithm comparison (3+)
-        comparison = run_multi_algorithm_comparison(
-            sequence_name=args.sequence,
-            algorithms=algorithms,
-            max_evaluations=args.max_evaluations,
-            num_runs=args.num_runs,
-            base_seed=args.seed,
-        )
-
-        print_multi_comparison_summary(comparison)
 
 
 if __name__ == "__main__":

@@ -1,13 +1,15 @@
 """
-Experiment runner for comparing GA and MCTS on HP protein folding.
+Experiment runner for comparing algorithms on HP protein folding.
 
-Orchestrates fair comparison with same evaluation budget for both algorithms.
+Supports GA, MCTS, and DQN algorithms.
+Orchestrates fair comparison with same evaluation budget for all algorithms.
 """
 
 from statistics import mean, median, stdev
 from time import perf_counter
 
 from benchmarks import get_best_known, get_optimal_energy, get_sequence, is_verified
+from dqn_solver import DQNSolver, generate_training_sequences
 from ga_solver import GASolver
 from mcts_solver import MCTSSolver
 
@@ -85,9 +87,94 @@ def run_mcts_experiment(
     }
 
 
+def run_dqn_experiment(
+    sequence: str,
+    max_evaluations: int = 100000,
+    learning_rate: float = 0.0005,
+    epsilon_start: float = 1.0,
+    epsilon_end: float = 0.15,  # Higher for more exploration
+    epsilon_decay_evals: int | None = None,  # Default: 60% of max_evaluations
+    replay_buffer_size: int = 50000,
+    batch_size: int = 64,
+    target_update_freq: int = 500,
+    gamma: float = 0.99,
+    grid_size: int = 20,
+    training_sequences: list[str] | None = None,
+    random_seed: int | None = None,
+    target_contacts: int | None = None,
+    use_double_dqn: bool = True,
+    greedy_exploration_prob: float = 0.3,  # Lower for more random exploration
+    pretrain: bool = False,
+    pretrain_evaluations: int = 100000,
+    pretrain_num_sequences: int = 50,
+) -> dict:
+    """
+    Run a single DQN experiment.
+
+    Args:
+        pretrain: Whether to pre-train on diverse sequences first
+        pretrain_evaluations: Number of evaluations for pre-training phase
+        pretrain_num_sequences: Number of diverse sequences to generate for pre-training
+
+    Returns:
+        Dictionary with results: best_contacts, best_energy, evaluations_used, etc.
+    """
+    # Default epsilon decay to half of max_evaluations
+    if epsilon_decay_evals is None:
+        epsilon_decay_evals = int(max_evaluations * 0.6)  # 60% of budget for decay
+
+    solver = DQNSolver(
+        sequence=sequence,
+        max_evaluations=max_evaluations,
+        learning_rate=learning_rate,
+        epsilon_start=epsilon_start,
+        epsilon_end=epsilon_end,
+        epsilon_decay_evals=epsilon_decay_evals,
+        replay_buffer_size=replay_buffer_size,
+        batch_size=batch_size,
+        target_update_freq=target_update_freq,
+        gamma=gamma,
+        grid_size=grid_size,
+        training_sequences=training_sequences,
+        random_seed=random_seed,
+        use_double_dqn=use_double_dqn,
+        greedy_exploration_prob=greedy_exploration_prob,
+    )
+
+    # Pre-training phase
+    if pretrain:
+        seq_len = len(sequence)
+        pretrain_seqs = generate_training_sequences(
+            num_sequences=pretrain_num_sequences,
+            min_length=max(8, seq_len - 5),
+            max_length=seq_len + 5,
+            random_seed=random_seed,
+        )
+        solver.pretrain(
+            training_sequences=pretrain_seqs,
+            pretrain_evaluations=pretrain_evaluations,
+            verbose=False,  # Quiet during batch runs
+        )
+
+    solver.solve(target_contacts=target_contacts)
+    stats = solver.get_statistics()
+
+    return {
+        "best_contacts": stats["best_contacts"],
+        "best_reward": stats["best_reward"],
+        "best_energy": stats["best_energy"],
+        "evaluations_used": stats["evaluations_used"],
+        "evaluations_to_best": stats["evaluations_to_best"],
+        "episodes": stats["episodes"],
+        "best_contacts_history": stats["best_contacts_history"],
+        "best_conformation": solver.best_conformation,
+        "pretrained": pretrain,
+    }
+
+
 def run_comparison(
     sequence_name: str,
-    algorithm: str,  # "ga" or "mcts"
+    algorithm: str,  # "ga", "mcts", or "dqn"
     max_evaluations: int = 100000,
     num_runs: int = 30,
     base_seed: int = 0,
@@ -98,7 +185,7 @@ def run_comparison(
 
     Args:
         sequence_name: Name of benchmark sequence
-        algorithm: "ga" or "mcts"
+        algorithm: "ga", "mcts", or "dqn"
         max_evaluations: Maximum evaluations per run
         num_runs: Number of independent runs
         base_seed: Base seed for random number generation
@@ -143,6 +230,38 @@ def run_comparison(
                 if result["best_reward"] > float("-inf")
                 else 0
             )
+        elif algorithm == "dqn":
+            # Extract DQN-specific kwargs
+            dqn_kwargs = {
+                k: v
+                for k, v in kwargs.items()
+                if k
+                in {
+                    "pretrain",
+                    "pretrain_evaluations",
+                    "pretrain_num_sequences",
+                    "learning_rate",
+                    "epsilon_start",
+                    "epsilon_end",
+                    "epsilon_decay_evals",
+                    "replay_buffer_size",
+                    "batch_size",
+                    "target_update_freq",
+                    "gamma",
+                    "grid_size",
+                    "training_sequences",
+                    "use_double_dqn",
+                    "greedy_exploration_prob",
+                }
+            }
+            result = run_dqn_experiment(
+                sequence=sequence,
+                max_evaluations=max_evaluations,
+                random_seed=seed,
+                target_contacts=target,
+                **dqn_kwargs,
+            )
+            best_contacts = result["best_contacts"]
         else:
             raise ValueError(f"Unknown algorithm: {algorithm}")
 
@@ -163,9 +282,11 @@ def run_comparison(
     for r in results:
         if algorithm == "ga":
             best_contacts_list.append(r["best_fitness"])
-        else:
+        elif algorithm == "mcts":
             contacts = int(r["best_reward"]) if r["best_reward"] > float("-inf") else 0
             best_contacts_list.append(contacts)
+        elif algorithm == "dqn":
+            best_contacts_list.append(r["best_contacts"])
 
     evaluations_used = [r["evaluations_used"] for r in results]
     evaluations_to_best = [
@@ -269,6 +390,7 @@ def run_multi_algorithm_comparison(
     max_evaluations: int = 100000,
     num_runs: int = 30,
     base_seed: int = 0,
+    dqn_kwargs: dict | None = None,
 ) -> dict:
     """
     Compare multiple algorithms on the same sequence.
@@ -279,21 +401,25 @@ def run_multi_algorithm_comparison(
         max_evaluations: Maximum evaluations per run
         num_runs: Number of independent runs per algorithm
         base_seed: Base seed for random number generation
+        dqn_kwargs: Extra kwargs for DQN (e.g., pretrain settings)
 
     Returns:
         Dictionary with results for each algorithm and comparison metrics
     """
     results = {}
+    dqn_kwargs = dqn_kwargs or {}
 
     for i, algo in enumerate(algorithms):
         # Use different seed offsets for each algorithm
         seed = base_seed + (i * 1000)
+        extra_kwargs = dqn_kwargs if algo == "dqn" else {}
         results[algo] = run_comparison(
             sequence_name=sequence_name,
             algorithm=algo,
             max_evaluations=max_evaluations,
             num_runs=num_runs,
             base_seed=seed,
+            **extra_kwargs,
         )
 
     # Find best algorithm by mean contacts
