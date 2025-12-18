@@ -400,13 +400,13 @@ def print_multi_comparison_summary(comparison: dict):
     optimal = results[first_algo].get("optimal_contacts")
     seq_length = results[first_algo].get("sequence_length", "?")
 
-    print(f"\n{'='*70}")
+    print(f"\n{'='*73}")
     print(f"Comparison for {comparison['sequence_name']} (length {seq_length})")
     if is_verified_seq:
         print(f"[VERIFIED BENCHMARK - Optimal: {optimal} contacts]")
     else:
         print(f"[UNVERIFIED - Relative comparison only]")
-    print(f"{'='*70}")
+    print(f"{'='*73}")
 
     # Print results for each algorithm
     for algo in algorithms:
@@ -427,7 +427,7 @@ def print_multi_comparison_summary(comparison: dict):
         )
 
     # Print comparison summary
-    print(f"\n{'─'*70}")
+    print(f"\n{'─'*73}")
     print("Summary:")
     print(
         f"  Best solution quality: {summary['best_algorithm'].upper()} ({summary['best_mean_contacts']:.2f} contacts)"
@@ -437,7 +437,7 @@ def print_multi_comparison_summary(comparison: dict):
     # Best overall found
     best_overall = max(r["max_contacts_found"] for r in results.values())
     print(f"\nBest found overall: {best_overall} contacts")
-    print(f"{'='*70}\n")
+    print(f"{'='*73}\n")
 
 
 def print_results_summary(results: dict):
@@ -481,7 +481,7 @@ def print_comparison_summary(comparison: dict):
     is_verified_seq = ga.get("is_verified", False)
     optimal = ga["optimal_contacts"]  # Only set for verified sequences
 
-    print(f"\n{'='*70}")
+    print(f"\n{'='*73}")
     print(
         f"Comparison for {comparison['sequence_name']} (length {ga['sequence_length']})"
     )
@@ -489,7 +489,7 @@ def print_comparison_summary(comparison: dict):
         print(f"[VERIFIED BENCHMARK - Optimal: {optimal} contacts]")
     else:
         print(f"[UNVERIFIED - Relative comparison only]")
-    print(f"{'='*70}")
+    print(f"{'='*73}")
 
     # Best found across both algorithms
     best_overall = max(ga["max_contacts_found"], mcts["max_contacts_found"])
@@ -556,4 +556,4 @@ def print_comparison_summary(comparison: dict):
             )
 
     print(f"\nBest found overall: {best_overall} contacts")
-    print(f"{'='*70}\n")
+    print(f"{'='*73}\n")

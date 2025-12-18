@@ -448,12 +448,16 @@ class DQNSolver:
 
             if training:
                 reward = self._compute_reward(next_conf, prev_conf, done, is_dead_end)
-                next_state_np = (
-                    encode_state(next_conf, grid_size=self.grid_size)
-                    if not is_dead_end
-                    else None
-                )
-                self.replay_buffer.push(state_np, action, reward, next_state_np, done)
+                # Only store valid transitions (action != -1) to avoid index errors
+                if action >= 0:
+                    next_state_np = (
+                        encode_state(next_conf, grid_size=self.grid_size)
+                        if not is_dead_end
+                        else None
+                    )
+                    self.replay_buffer.push(
+                        state_np, action, reward, next_state_np, done
+                    )
                 self.env_step_count += 1
 
                 # Train less frequently for speed

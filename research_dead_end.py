@@ -177,11 +177,11 @@ def run_experiment(sequence_name, max_evals=50000, num_runs=20):
     sequence = get_sequence(sequence_name)
     strategies = ["penalty", "restart", "partial"]
 
-    print(f"\n{'='*70}")
+    print(f"\n{'='*73}")
     print("EXPERIMENT: Dead-End Handling Strategies")
     print(f"Sequence: {sequence_name} (length {len(sequence)})")
     print(f"Evaluations: {max_evals}, Runs: {num_runs}")
-    print(f"{'='*70}\n")
+    print(f"{'='*73}\n")
 
     results = {}
 

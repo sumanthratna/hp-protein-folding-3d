@@ -18,11 +18,11 @@ def run_experiment(sequence_name, num_runs=20):
 
     budgets = [10000, 25000, 50000, 100000]
 
-    print(f"\n{'='*70}")
+    print(f"\n{'='*73}")
     print("EXPERIMENT: Equal Compute Budget Scaling")
     print(f"Sequence: {sequence_name} (length {len(sequence)})")
     print(f"Runs per budget: {num_runs}")
-    print(f"{'='*70}\n")
+    print(f"{'='*73}\n")
 
     results = {"ga": {}, "mcts": {}}
 

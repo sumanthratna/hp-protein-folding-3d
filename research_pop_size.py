@@ -19,11 +19,11 @@ def run_experiment(sequence_name, total_budget=100000, num_runs=20):
     # With fixed budget, larger pop = fewer generations
     pop_sizes = [50, 100, 200, 400]
 
-    print(f"\n{'='*70}")
+    print(f"\n{'='*73}")
     print("EXPERIMENT: GA Population Size Trade-off")
     print(f"Sequence: {sequence_name} (length {len(sequence)})")
     print(f"Total budget: {total_budget}, Runs: {num_runs}")
-    print(f"{'='*70}\n")
+    print(f"{'='*73}\n")
 
     results = {}
 

@@ -1,9 +1,6 @@
 #!/bin/bash
 # Test script for 3D HP Protein Folding project
 # CPSC 5740 Final Project - Sumanth Ratna (sr2437)
-#
-# This script demonstrates the project, explains the research question,
-# and shows results from full experiments.
 
 set -e
 
@@ -21,71 +18,71 @@ else
     exit 1
 fi
 
-# Create results directory
 mkdir -p results
 
 # ============================================
-# PROBLEM DESCRIPTION
+# GAME DESCRIPTION
 # ============================================
-echo "PROBLEM DESCRIPTION"
-echo "-------------------"
-echo "The 3D HP (Hydrophobic-Polar) protein folding model represents a protein"
-echo "as a sequence of H (hydrophobic) and P (polar) monomers that fold on a 3D"
-echo "cubic lattice. The goal is to find a self-avoiding walk that maximizes"
-echo "the number of non-sequential H-H contacts (minimizes energy)."
-echo ""
-echo "This is an NP-hard combinatorial optimization problem with a search space"
-echo "that grows exponentially with sequence length (5^n possible conformations)."
+echo "GAME/PROBLEM:"
+echo "The 3D HP protein folding model is a combinatorial optimization problem"
+echo "where a protein (sequence of H/P monomers) must fold on a 3D cubic lattice"
+echo "to maximize H-H contacts. This is NP-hard with O(5^n) search space."
 echo ""
 
 # ============================================
-# ALGORITHMS IMPLEMENTED
+# WHAT THE CODE DOES
 # ============================================
-echo "ALGORITHMS IMPLEMENTED"
-echo "----------------------"
-echo "1. Genetic Algorithm (GA)"
-echo "   - Population-based evolution with greedy initialization"
-echo "   - Multi-point crossover and segment regrowth mutation"
-echo "   - Tournament selection with elitism"
-echo "   - Local search (hill climbing) refinement"
-echo ""
-echo "2. Monte Carlo Tree Search (MCTS)"
-echo "   - UCT selection with exploration constant tuning"
-echo "   - Greedy rollout policy (prioritizes H-H contacts)"
-echo "   - Smart expansion ordering (promising moves first)"
-echo "   - Periodic local search refinement"
-echo ""
-echo "3. Deep Q-Network (DQN) [Stretch Goal]"
-echo "   - 3D CNN architecture for spatial state encoding"
-echo "   - Double DQN for reduced overestimation"
-echo "   - Domain-guided exploration (H-H contact bias)"
-echo "   - Experience replay and target network"
+echo "WHAT THE CODE DOES:"
+echo "Implements and compares three algorithms for finding optimal protein folds:"
+echo "  - Genetic Algorithm (GA): population-based evolution with local search"
+echo "  - Monte Carlo Tree Search (MCTS): UCT selection with greedy rollouts"
+echo "  - Deep Q-Network (DQN): 3D CNN with Double DQN (stretch goal)"
 echo ""
 
 # ============================================
-# RESEARCH QUESTIONS
+# RESEARCH QUESTION
 # ============================================
-echo "RESEARCH QUESTIONS"
-echo "------------------"
-echo "Primary: How do GA, MCTS, and DQN compare in solution quality and"
-echo "         computational efficiency for 3D HP protein folding?"
-echo ""
-echo "Additional questions explored:"
-echo "  Q2: How do different dead-end handling strategies affect MCTS?"
-echo "  Q3: What is the optimal population size vs. generations trade-off for GA?"
-echo "  Q4: How does performance scale with compute budget (10k-100k evals)?"
+echo "RESEARCH QUESTION:"
+echo "I'm determining how GA compares to MCTS in solution quality (H-H contacts"
+echo "found) and computational efficiency for 3D HP protein folding. I measure"
+echo "mean contacts achieved over multiple runs on benchmark sequences with"
+echo "known optimal values (Unger & Moult 27-mers, optimal = 28 contacts)."
 echo ""
 
 # ============================================
-# QUICK DEMO (runs in ~1-2 minutes)
+# RESULTS (from full experiments)
+# ============================================
+echo "RESULTS (100,000 evaluations, 10 runs per algorithm):"
+echo ""
+echo "Sequence UM1_27 (27 monomers, optimal = 28 contacts):"
+echo "  GA:   Mean = 22.00 contacts (79% of optimal), Best = 23"
+echo "  MCTS: Mean = 22.97 contacts (82% of optimal), Best = 23"
+echo "  Winner: MCTS (+0.97 contacts on average)"
+echo ""
+echo "Sequence UM2_27 (27 monomers, optimal = 28 contacts):"
+echo "  GA:   Mean = 23.23 contacts (83% of optimal), Best = 24"
+echo "  MCTS: Mean = 24.00 contacts (86% of optimal), Best = 24"
+echo "  Winner: MCTS (+0.77 contacts on average)"
+echo ""
+echo "DQN (stretch goal):"
+echo "  DQN was implemented but not fully benchmarked due to long training times."
+echo "  RL approaches require significantly more compute budget to converge compared"
+echo "  to search methods. To run DQN: python3 main.py -s S1_20 -a dqn -e 50000 -n 3"
+echo ""
+echo "Key findings:"
+echo "  - MCTS consistently outperforms GA (achieves 82-86% vs 79-83% of optimal)"
+echo "  - Sequential decision-making (MCTS) suits chain-growth better than GA"
+echo "  - Neither algorithm reaches global optimum on 27-mers within budget"
+echo ""
+
+# ============================================
+# QUICK DEMO (runs in ~1 minute)
 # ============================================
 echo "=========================================="
-echo "QUICK DEMO"
+echo "QUICK DEMO (runs in ~1 minute)"
 echo "=========================================="
 echo ""
-echo "Running quick comparison on sequence S1_20 (20 monomers)..."
-echo "Budget: 5000 evaluations, 3 runs per algorithm"
-echo "(This demonstrates the code works; full results are shown below)"
+echo "Running GA vs MCTS on S1_20 (20 monomers), 5000 evaluations, 3 runs:"
 echo ""
 
 python3 main.py --sequence S1_20 --algorithms ga,mcts --max-evaluations 5000 --num-runs 3
@@ -93,51 +90,19 @@ python3 main.py --sequence S1_20 --algorithms ga,mcts --max-evaluations 5000 --n
 echo ""
 
 # ============================================
-# MAIN RESULTS SUMMARY
+# REPRODUCTION INSTRUCTIONS
 # ============================================
 echo "=========================================="
-echo "MAIN RESULTS SUMMARY (from full experiments)"
+echo "TO REPRODUCE FULL RESULTS (~10 min each):"
 echo "=========================================="
 echo ""
-echo "Full experiments used 100,000 evaluations and 10 runs per algorithm."
-echo "Results are from verified Unger & Moult 27-mer sequences with known optima."
-echo ""
-echo "Sequence   | Optimal | GA Mean | GA Best | MCTS Mean | MCTS Best | Winner"
-echo "-----------|---------|---------|---------|-----------|-----------|-------"
-echo "UM1_27     |   28    |  22.00  |   23    |   22.97   |    23     | MCTS"
-echo "UM2_27     |   28    |  23.23  |   24    |   24.00   |    24     | MCTS"
-echo ""
-echo "Key Findings:"
-echo "  - MCTS consistently outperforms GA on all tested sequences"
-echo "  - MCTS achieves 82-86% of optimal vs GA's 79-83%"
-echo "  - Both algorithms struggle to reach global optimum on 27-mers"
-echo "  - GA benefits from larger population sizes (200-400)"
-echo "  - Dead-end handling strategy has minimal impact (greedy avoids dead-ends)"
-echo "  - DQN shows promise but requires more training for competitive results"
-echo ""
-
-# ============================================
-# INSTRUCTIONS FOR FULL REPRODUCTION
-# ============================================
-echo "=========================================="
-echo "TO REPRODUCE FULL RESULTS"
-echo "=========================================="
-echo ""
-echo "# Full comparison on verified sequences (takes ~10 minutes each):"
 echo "python3 main.py -s UM1_27 -a ga,mcts -e 100000 -n 10 --plot"
 echo "python3 main.py -s UM2_27 -a ga,mcts -e 100000 -n 10 --plot"
 echo ""
-echo "# Include DQN in comparison (requires GPU for reasonable speed):"
-echo "python3 main.py -s S1_20 -a ga,mcts,dqn -e 50000 -n 5"
-echo ""
-echo "# Run individual research experiments:"
-echo "python3 research_dead_end.py    # MCTS dead-end handling strategies"
-echo "python3 research_pop_size.py    # GA population size trade-off"
-echo "python3 research_budget.py      # Budget scaling comparison"
-echo ""
-echo "# List available sequences and algorithms:"
-echo "python3 main.py --list-sequences"
-echo "python3 main.py --list-algorithms"
+echo "Additional research experiments:"
+echo "python3 research_dead_end.py    # Q2: MCTS dead-end strategies"
+echo "python3 research_pop_size.py    # Q3: GA population size trade-off"
+echo "python3 research_budget.py      # Q4: Budget scaling comparison"
 echo ""
 echo "=========================================="
 echo "Test completed successfully!"

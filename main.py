@@ -132,13 +132,13 @@ Examples:
     algorithms = parse_algorithms(args.algorithms)
 
     # Print header
-    print(f"\n{'='*70}")
+    print(f"\n{'='*73}")
     print("3D HP Protein Folding: Computational Intelligence Comparison")
-    print(f"{'='*70}")
+    print(f"{'='*73}")
     print(f"\nResearch Question:")
     print("How do different algorithms compare in solution quality and computational")
     print("efficiency for 3D HP protein folding across sequences of varying lengths?")
-    print(f"\n{'='*70}\n")
+    print(f"\n{'='*73}\n")
 
     # Ensure results directory exists
     os.makedirs("results", exist_ok=True)

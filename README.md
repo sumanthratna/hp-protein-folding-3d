@@ -1,5 +1,7 @@
 # 3D HP Protein Folding
 
+https://github.com/sumanthratna/hp-protein-folding-3d
+
 ## Problem Description
 
 The **3D HP (Hydrophobic-Polar) protein folding model** is a simplified representation of protein folding where:
