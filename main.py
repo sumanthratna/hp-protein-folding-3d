@@ -104,17 +104,6 @@ Examples:
         default=0,
         help="Base random seed for reproducibility (default: 0)",
     )
-    parser.add_argument(
-        "--pretrain",
-        action="store_true",
-        help="Pre-train DQN on diverse sequences before fine-tuning (improves DQN performance)",
-    )
-    parser.add_argument(
-        "--pretrain-evals",
-        type=int,
-        default=100000,
-        help="Number of evaluations for DQN pre-training phase (default: 100000)",
-    )
 
     args = parser.parse_args()
 
@@ -158,16 +147,7 @@ Examples:
     print(f"Algorithms: {', '.join(algorithms)}")
     print(f"Max evaluations: {args.max_evaluations}")
     print(f"Number of runs: {args.num_runs}")
-    print(f"Random seed: {args.seed}")
-    if "dqn" in algorithms and args.pretrain:
-        print(f"DQN pre-training: {args.pretrain_evals} evaluations")
-    print()
-
-    # Build extra kwargs for DQN pre-training
-    dqn_kwargs = {}
-    if args.pretrain:
-        dqn_kwargs["pretrain"] = True
-        dqn_kwargs["pretrain_evaluations"] = args.pretrain_evals
+    print(f"Random seed: {args.seed}\n")
 
     if len(algorithms) == 1:
         # Single algorithm run
@@ -180,7 +160,6 @@ Examples:
             max_evaluations=args.max_evaluations,
             num_runs=args.num_runs,
             base_seed=args.seed,
-            **(dqn_kwargs if algo == "dqn" else {}),
         )
 
         from runner import print_results_summary
@@ -213,7 +192,6 @@ Examples:
             max_evaluations=args.max_evaluations,
             num_runs=args.num_runs,
             base_seed=args.seed,
-            dqn_kwargs=dqn_kwargs if "dqn" in algorithms else None,
         )
 
         print_multi_comparison_summary(comparison)

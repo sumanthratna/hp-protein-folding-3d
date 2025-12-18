@@ -9,7 +9,7 @@ from statistics import mean, median, stdev
 from time import perf_counter
 
 from benchmarks import get_best_known, get_optimal_energy, get_sequence, is_verified
-from dqn_solver import DQNSolver, generate_training_sequences
+from dqn_solver import DQNSolver
 from ga_solver import GASolver
 from mcts_solver import MCTSSolver
 
@@ -104,17 +104,9 @@ def run_dqn_experiment(
     target_contacts: int | None = None,
     use_double_dqn: bool = True,
     greedy_exploration_prob: float = 0.3,  # Lower for more random exploration
-    pretrain: bool = False,
-    pretrain_evaluations: int = 100000,
-    pretrain_num_sequences: int = 50,
 ) -> dict:
     """
     Run a single DQN experiment.
-
-    Args:
-        pretrain: Whether to pre-train on diverse sequences first
-        pretrain_evaluations: Number of evaluations for pre-training phase
-        pretrain_num_sequences: Number of diverse sequences to generate for pre-training
 
     Returns:
         Dictionary with results: best_contacts, best_energy, evaluations_used, etc.
@@ -141,21 +133,6 @@ def run_dqn_experiment(
         greedy_exploration_prob=greedy_exploration_prob,
     )
 
-    # Pre-training phase
-    if pretrain:
-        seq_len = len(sequence)
-        pretrain_seqs = generate_training_sequences(
-            num_sequences=pretrain_num_sequences,
-            min_length=max(8, seq_len - 5),
-            max_length=seq_len + 5,
-            random_seed=random_seed,
-        )
-        solver.pretrain(
-            training_sequences=pretrain_seqs,
-            pretrain_evaluations=pretrain_evaluations,
-            verbose=False,  # Quiet during batch runs
-        )
-
     solver.solve(target_contacts=target_contacts)
     stats = solver.get_statistics()
 
@@ -168,7 +145,6 @@ def run_dqn_experiment(
         "episodes": stats["episodes"],
         "best_contacts_history": stats["best_contacts_history"],
         "best_conformation": solver.best_conformation,
-        "pretrained": pretrain,
     }
 
 
@@ -231,35 +207,11 @@ def run_comparison(
                 else 0
             )
         elif algorithm == "dqn":
-            # Extract DQN-specific kwargs
-            dqn_kwargs = {
-                k: v
-                for k, v in kwargs.items()
-                if k
-                in {
-                    "pretrain",
-                    "pretrain_evaluations",
-                    "pretrain_num_sequences",
-                    "learning_rate",
-                    "epsilon_start",
-                    "epsilon_end",
-                    "epsilon_decay_evals",
-                    "replay_buffer_size",
-                    "batch_size",
-                    "target_update_freq",
-                    "gamma",
-                    "grid_size",
-                    "training_sequences",
-                    "use_double_dqn",
-                    "greedy_exploration_prob",
-                }
-            }
             result = run_dqn_experiment(
                 sequence=sequence,
                 max_evaluations=max_evaluations,
                 random_seed=seed,
                 target_contacts=target,
-                **dqn_kwargs,
             )
             best_contacts = result["best_contacts"]
         else:
@@ -390,7 +342,6 @@ def run_multi_algorithm_comparison(
     max_evaluations: int = 100000,
     num_runs: int = 30,
     base_seed: int = 0,
-    dqn_kwargs: dict | None = None,
 ) -> dict:
     """
     Compare multiple algorithms on the same sequence.
@@ -401,25 +352,21 @@ def run_multi_algorithm_comparison(
         max_evaluations: Maximum evaluations per run
         num_runs: Number of independent runs per algorithm
         base_seed: Base seed for random number generation
-        dqn_kwargs: Extra kwargs for DQN (e.g., pretrain settings)
 
     Returns:
         Dictionary with results for each algorithm and comparison metrics
     """
     results = {}
-    dqn_kwargs = dqn_kwargs or {}
 
     for i, algo in enumerate(algorithms):
         # Use different seed offsets for each algorithm
         seed = base_seed + (i * 1000)
-        extra_kwargs = dqn_kwargs if algo == "dqn" else {}
         results[algo] = run_comparison(
             sequence_name=sequence_name,
             algorithm=algo,
             max_evaluations=max_evaluations,
             num_runs=num_runs,
             base_seed=seed,
-            **extra_kwargs,
         )
 
     # Find best algorithm by mean contacts
